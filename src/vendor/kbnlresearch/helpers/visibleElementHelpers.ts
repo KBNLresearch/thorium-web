@@ -27,13 +27,7 @@ export function isElementVisible(wnd : Window, element : HTMLElement) {
     return true
 }
 
-export interface TextRangeTraverser {
-    elementsWithOwnText: HTMLElement[]
-    traversed: HTMLElement[]
-
-}
-
-export function getVisibleElementsWithOwnText(wnd : Window, current? : Element, gathered? : HTMLElement[]): TextRangeTraverser {
+export function getVisibleElementsWithOwnText(wnd : Window, current? : Element, gathered? : HTMLElement[]): HTMLElement[] {
     current = current ?? wnd.document.documentElement;
     gathered = gathered ?? [];
 
@@ -46,9 +40,16 @@ export function getVisibleElementsWithOwnText(wnd : Window, current? : Element, 
             getVisibleElementsWithOwnText(wnd, current.childNodes[idx] as Element, gathered);
         }
     }
+    return gathered
+}
 
-    return {
-        elementsWithOwnText: gathered,
-        traversed: []
-    }
+export function getVisibleOrderedTextRangesFromElementsWithOwnText(wnd : Window, elems : HTMLElement[]): any[] {
+    // first purge out the elements that are already accounted for because they are a child
+    // of one of the elements in the original list
+    const elemsWithChildren = elems.filter((el) => el.childElementCount > 0);
+    const purgedElems = elems.filter((el) => elemsWithChildren.indexOf(el.parentElement as HTMLElement) < 0)
+    console.log("purged list of elements that should be read out")
+    purgedElems.map(console.log);
+
+    return []
 }
