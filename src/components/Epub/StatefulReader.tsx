@@ -464,9 +464,10 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
   const listeners: EpubNavigatorListeners = {
     frameLoaded: async function (_wnd: Window): Promise<void> {
       await initReadingEnv();
+      wnd.current = _wnd;
+      console.log("--- FRAME LOADED, NEW WINDOW OBJECT RECEIVED ---")
       // Warning: this is using navigator’s internal methods that will become private, do not rely on them
       // See https://github.com/edrlab/thorium-web/issues/25
-      wnd.current = _wnd;
       const _cframes = getCframes();
       _cframes?.forEach(
         (frameManager: FrameManager | FXLFrameManager | undefined) => {
