@@ -108,6 +108,7 @@ import Peripherals from "../../helpers/peripherals";
 import { getPlatformModifier } from "@/core/Helpers/keyboardUtilities";
 import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
+import { getVisibleElementsWithOwnText, isElementVisible } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
 
 export interface ReadiumCSSSettings {
   columnCount: string;
@@ -479,7 +480,15 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
         const debouncedHandleProgression = debounce(
           async () => {
             setLocalData(locator);
-            console.log(wnd.current?.document.querySelector("body")?.textContent)
+            //console.log(wnd.current?.document.querySelector("body")?.textContent)
+            console.log("---position changed, querying visible elements---")
+            // wnd.current?.document.querySelectorAll("body *").forEach((el) => {
+            //   if (isElementVisible(wnd.current!, el as HTMLElement)) {
+            //     console.log(el);
+            //   }
+            // })
+            const result = getVisibleElementsWithOwnText(wnd.current!);
+            result.elementsWithOwnText.forEach(console.log);
 
           }, 250);
         debouncedHandleProgression();
