@@ -1,32 +1,3 @@
-export function isElementVisible(wnd : Window, element : HTMLElement) {
-    const style = wnd.getComputedStyle(element);
-    const rect = element.getBoundingClientRect();
-
-    // Basic visibility checks
-    if (style.display === 'none' ||
-        style.visibility === 'hidden' ||
-        parseFloat(style.opacity) === 0) {
-        return false;
-    }
-
-    // Check dimensions
-    if (rect.width === 0 || rect.height === 0) {
-        return false;
-    }
-
-    // Check if element is in viewport
-    const viewport = {
-        width: wnd.innerWidth || wnd.document.documentElement.clientWidth,
-        height: wnd.innerHeight || wnd.document.documentElement.clientHeight
-    };
-
-    if (rect.bottom < 0 || rect.right < 0 ||
-        rect.top > viewport.height || rect.left > viewport.width) {
-        return false;
-    }
-    return true
-}
-
 function isTextNodeVisible(wnd : Window, textNode : Node): boolean {
     const range = new Range();
     range.setStart(textNode, 0);
@@ -43,17 +14,17 @@ function isTextNodeVisible(wnd : Window, textNode : Node): boolean {
     return true;
 }
 
-export function getVisibleElementsWithOwnText(wnd : Window, currentElement? : Element, gathered? : HTMLElement[]): HTMLElement[] {
+export function getElementsWithOwnText(wnd : Window, currentElement? : Element, gathered? : HTMLElement[]): HTMLElement[] {
     currentElement = currentElement ?? wnd.document.documentElement;
     gathered = gathered ?? [];
 
     for (let idx = 0; idx < currentElement.childNodes.length; idx++) {
         if (currentElement.childNodes[idx].nodeType === Node.TEXT_NODE && currentElement.childNodes[idx].textContent!.trim().length > 0) {
-            if (gathered.indexOf(currentElement as HTMLElement) < 0 && isElementVisible(wnd, currentElement as HTMLElement)) {
+            if (gathered.indexOf(currentElement as HTMLElement) < 0) {
                 gathered.push(currentElement as HTMLElement);
             }
         } else if (currentElement.childNodes[idx].nodeType === Node.ELEMENT_NODE) {
-            getVisibleElementsWithOwnText(wnd, currentElement.childNodes[idx] as Element, gathered);
+            getElementsWithOwnText(wnd, currentElement.childNodes[idx] as Element, gathered);
         }
     }
     return gathered
@@ -89,10 +60,10 @@ export function getVisibleOrderedTextRangesFromElementsWithOwnText(wnd : Window,
     // For each of these root-elements distill all their text-nodes as one utterance
     // also make sure the text range is within the viewport
     const textNodeSentences = purgedElems.map((el) => gatherTextNodes(wnd, el));
-    console.log("the text nodes that should be part of the utterance made unique in a nested array: ")
+    console.log("the text nodes that should be part of the utterance made unique in a nested array (only show currently visible): ")
     textNodeSentences.forEach((tns, idx) => {
         console.log(`Utterance Chunk ${idx + 1}:`)
-        tns.forEach((tn) => console.log(tn.textNode, tn.inViewport ? "...in viewport" : "...NOT in viewport"));
+        tns.filter((tn) => tn.inViewport).forEach((tn) => console.log(tn.textNode));
     })
 
     return [];

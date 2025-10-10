@@ -108,7 +108,7 @@ import Peripherals from "../../helpers/peripherals";
 import { getPlatformModifier } from "@/core/Helpers/keyboardUtilities";
 import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
-import { getVisibleElementsWithOwnText, getVisibleOrderedTextRangesFromElementsWithOwnText, isElementVisible } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
+import { getElementsWithOwnText, getVisibleOrderedTextRangesFromElementsWithOwnText } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
 
 export interface ReadiumCSSSettings {
   columnCount: string;
@@ -188,7 +188,7 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
   const { getEffectiveSpacingValue } = useSpacingPresets();
 
   const [publication, setPublication] = useState<Publication | null>(null);
-
+  const [htmlElementsWithOwnText, setHtmlElementsWithOwnText] = useState<HTMLElement[]|null>(null);
   const container = useRef<HTMLDivElement>(null);
   const localDataKey = useRef(`${selfHref}-current-location`);
   const arrowsWidth = useRef(2 * ((preferences.theming.arrow.size || 40) + (preferences.theming.arrow.offset || 0)));
@@ -481,10 +481,14 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
         const debouncedHandleProgression = debounce(
           async () => {
             setLocalData(locator);
-
+            let result = htmlElementsWithOwnText;
+            if (result === null) {
+              console.log("--- html not loaded yet, reading full page ---")
+              result = getElementsWithOwnText(wnd.current!);
+              result.forEach(console.log);
+              setHtmlElementsWithOwnText(result);
+            }
             console.log("---position changed, querying visible elements---")
-            const result = getVisibleElementsWithOwnText(wnd.current!);
-            result.forEach(console.log);
             getVisibleOrderedTextRangesFromElementsWithOwnText(wnd.current!, result);
 
           }, 250);
