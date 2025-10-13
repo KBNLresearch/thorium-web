@@ -19,6 +19,7 @@ export function getElementsWithOwnText(wnd : Window, currentElement? : Element, 
     gathered = gathered ?? [];
 
     for (let idx = 0; idx < currentElement.childNodes.length; idx++) {
+        if (currentElement.childNodes[idx].nodeName.toLocaleLowerCase() === "head") { continue; }
         if (currentElement.childNodes[idx].nodeType === Node.TEXT_NODE && currentElement.childNodes[idx].textContent!.trim().length > 0) {
             if (gathered.indexOf(currentElement as HTMLElement) < 0) {
                 gathered.push(currentElement as HTMLElement);
