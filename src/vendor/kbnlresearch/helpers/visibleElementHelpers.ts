@@ -1,4 +1,4 @@
-function isTextNodeVisible(wnd : Window, textNode : Node): boolean {
+export function isTextNodeVisible(wnd : Window, textNode : Node): boolean {
     const range = new Range();
     range.setStart(textNode, 0);
     range.setEnd(textNode, textNode.textContent!.length)
@@ -31,41 +31,57 @@ export function getElementsWithOwnText(wnd : Window, currentElement? : Element, 
     return gathered
 }
 
-interface TextNodeWithVisibility {
-    textNode : Node
-    inViewport : boolean
-}
 
-function gatherTextNodes(wnd : Window, currentElement : HTMLElement, gathered? : TextNodeWithVisibility[] ): TextNodeWithVisibility[] {
+function gatherTextNodes(currentElement : HTMLElement, gathered? : Node[] ): Node[] {
     gathered = gathered ?? []
 
     for (let idx = 0; idx < currentElement.childNodes.length; idx++) {
         if (currentElement.childNodes[idx].nodeType === Node.TEXT_NODE) {
-            gathered.push({
-                textNode: currentElement.childNodes[idx],
-                inViewport:  isTextNodeVisible(wnd, currentElement.childNodes[idx])
-            })
+            gathered.push(currentElement.childNodes[idx])
         } else if (currentElement.childNodes[idx].nodeType === Node.ELEMENT_NODE) {
-            gatherTextNodes(wnd, currentElement.childNodes[idx] as HTMLElement, gathered);
+            gatherTextNodes(currentElement.childNodes[idx] as HTMLElement, gathered);
         }
     }
     return gathered;
 }
 
-export function getVisibleOrderedTextRangesFromElementsWithOwnText(wnd : Window, elems : HTMLElement[]): any[] {
+
+export type RangedTextNode = {
+    textNode: Node
+    parentStartCharIndex: number
+}
+
+export type DocumentTextNodesChunk = {
+    rangedTextNodes: RangedTextNode[]
+    utteranceStr: string
+}
+
+export function gatherAndPrepareTextNodes(wnd : Window): DocumentTextNodesChunk[] {
+    const elems = getElementsWithOwnText(wnd);
     // first purge out the elements that are already accounted for because they are a child
     // of one of the elements in the original list
     const elemsWithChildren = elems.filter((el) => el.childElementCount > 0);
     const purgedElems = elems.filter((el) => elemsWithChildren.indexOf(el.parentElement as HTMLElement) < 0)
 
-    // For each of these root-elements distill all their text-nodes as one utterance
-    // also make sure the text range is within the viewport
-    const textNodeSentences = purgedElems.map((el) => gatherTextNodes(wnd, el));
-    console.log("the text nodes that should be part of the utterance made unique in a nested array (only show currently visible): ")
-    textNodeSentences.forEach((tns, idx) => {
-        console.log(`Utterance Chunk ${idx + 1}:`)
-        tns.filter((tn) => tn.inViewport).forEach((tn) => console.log(tn.textNode));
-    })
-
-    return [];
+    // For each of these root-elements distill all their text-nodes as one utterance:
+    // utterance is a DocumentTextNodesChunk (often a <p> block or a an <h..> element)
+    return purgedElems
+        .map((el) => gatherTextNodes(el))
+        .map((chnk) => ({
+            rangedTextNodes: chnk.reduce(
+                (aggr, cur) => {
+                    const parentStartCharIndex = aggr.length > 0 ? (
+                                aggr[aggr.length - 1].parentStartCharIndex +
+                                aggr[aggr.length - 1].textNode.textContent!.length
+                            ) : 0;
+                    return aggr.concat({
+                        textNode: cur,
+                        parentStartCharIndex: parentStartCharIndex
+                    });
+                }, [] as RangedTextNode[]
+            ),
+            utteranceStr: chnk.reduce((aggr, cur) => {
+                return aggr + cur.textContent
+            }, "")
+        }))
 }

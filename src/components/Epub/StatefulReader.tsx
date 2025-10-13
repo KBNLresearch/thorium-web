@@ -108,7 +108,7 @@ import Peripherals from "../../helpers/peripherals";
 import { getPlatformModifier } from "@/core/Helpers/keyboardUtilities";
 import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
-import { getElementsWithOwnText, getVisibleOrderedTextRangesFromElementsWithOwnText } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
+import { gatherAndPrepareTextNodes, isTextNodeVisible } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
 
 export interface ReadiumCSSSettings {
   columnCount: string;
@@ -188,8 +188,6 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
   const { getEffectiveSpacingValue } = useSpacingPresets();
   
   const [publication, setPublication] = useState<Publication | null>(null);
-  const [htmlElementsWithOwnText, setHtmlElementsWithOwnText] = useState<HTMLElement[]|null>(null);
-
   const container = useRef<HTMLDivElement>(null);
   const localDataKey = useRef(`${selfHref}-current-location`);
   const arrowsWidth = useRef(2 * ((preferences.theming.arrow.size || 40) + (preferences.theming.arrow.offset || 0)));
@@ -466,7 +464,7 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
     frameLoaded: async function (_wnd: Window): Promise<void> {
       await initReadingEnv();
       wnd.current = _wnd;
-      console.log("--- FRAME LOADED, NEW WINDOW OBJECT RECEIVED ---")
+
       // Warning: this is using navigator’s internal methods that will become private, do not rely on them
       // See https://github.com/edrlab/thorium-web/issues/25
       const _cframes = getCframes();
@@ -482,15 +480,16 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
         const debouncedHandleProgression = debounce(
           async () => {
             setLocalData(locator);
-            let result = htmlElementsWithOwnText;
-            if (result === null) {
-              console.log("--- html not loaded yet, reading full page ---")
-              result = getElementsWithOwnText(wnd.current!);
-              result.forEach(console.log);
-              setHtmlElementsWithOwnText(result);
-            }
-            console.log("---position changed, querying visible elements---")
-            getVisibleOrderedTextRangesFromElementsWithOwnText(wnd.current!, result);
+            console.log("\n-- position changed --")
+            const documentTextNodes = gatherAndPrepareTextNodes(wnd.current!);
+            documentTextNodes.forEach((dtn, idx) => {
+              const mayLogIfVisible = `Text chunk ${idx + 1} - utterance:`;
+
+              dtn.rangedTextNodes.filter((rt) => isTextNodeVisible(wnd.current!, rt.textNode)).forEach((vrtn) => {
+                console.log(mayLogIfVisible);
+                console.log(vrtn.textNode, `--> PoS(${vrtn.parentStartCharIndex}) -->`, dtn.utteranceStr.substring(vrtn.parentStartCharIndex, vrtn.parentStartCharIndex + vrtn.textNode.textContent!.length))
+              })
+            })
           }, 250);
         debouncedHandleProgression();
       }
