@@ -1,10 +1,30 @@
 import { useAppSelector } from "@/lib"
 import { useEffect } from "react"
-import { gatherAndPrepareTextNodes, isTextNodeVisible } from "../helpers/visibleElementHelpers";
+import { isTextNodeVisible } from "../helpers/visibleElementHelpers";
+import { WebSpeechReadAloudNavigator } from "../readium-speech";
+
+
+const navigator = new WebSpeechReadAloudNavigator()
+
 
 export function StatefulControlledReadAloudExperiment() {
     const { lastNavTS, wnd, documentTextNodes } = useAppSelector(state => state.readAloudExperiment)
-    
+
+    useEffect(() => {
+        if (wnd) {
+            navigator.loadContent(documentTextNodes.map((dtn, idx) => ({
+                id: `${idx}`,
+                text: dtn.utteranceStr
+            })))
+            navigator.on("boundary", (ev) => {
+                // console.log(navigator.getCurrentContent())
+                // console.log(ev.detail)
+                // console.log(documentTextNodes[parseInt(navigator.getCurrentContent()!.id!)])
+            })
+            wnd.addEventListener("beforeunload", () => navigator.stop())
+        }
+    }, [wnd]);
+
     useEffect(() => {
         if (wnd) {
             console.clear()
@@ -16,11 +36,26 @@ export function StatefulControlledReadAloudExperiment() {
                     console.log(vrtn.textNode, `--> PoS(${vrtn.parentStartCharIndex}) -->`, dtn.utteranceStr.substring(vrtn.parentStartCharIndex, vrtn.parentStartCharIndex + vrtn.textNode.textContent!.length))
                 });
             })
+            const utteranceIndices = documentTextNodes.map((dtn, idx) => {
+                if (dtn.rangedTextNodes.find((rt) => isTextNodeVisible(wnd, rt.textNode))) {
+                    return idx;
+                }
+                return -1;
+            }).filter((idx) => idx > -1);
+            if (utteranceIndices.length === 1) {
+                navigator.jumpTo(utteranceIndices[0]);
+                navigator.play()
+            } else if (utteranceIndices.length > 1) {
+                navigator.jumpTo(utteranceIndices[1]);
+                navigator.play()
+            } else {
+                navigator.stop()
+            }
         }
     }, [lastNavTS])
 
     return (
-        <pre>
+        <pre onClick={() => navigator.stop()}>
             {lastNavTS} - {wnd?.document?.title}
         </pre>
     )
