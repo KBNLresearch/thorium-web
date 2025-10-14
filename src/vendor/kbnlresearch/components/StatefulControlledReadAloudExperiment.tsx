@@ -8,7 +8,7 @@ const navigator = new WebSpeechReadAloudNavigator()
 
 
 export function StatefulControlledReadAloudExperiment() {
-    const { lastNavTS, wnd, documentTextNodes } = useAppSelector(state => state.readAloudExperiment)
+    const { lastNavTS, wnd, documentTextNodes, clickedPosition } = useAppSelector(state => state.readAloudExperiment)
 
     useEffect(() => {
         if (wnd) {
@@ -17,13 +17,21 @@ export function StatefulControlledReadAloudExperiment() {
                 text: dtn.utteranceStr
             })))
             navigator.on("boundary", (ev) => {
-                // console.log(navigator.getCurrentContent())
-                // console.log(ev.detail)
-                // console.log(documentTextNodes[parseInt(navigator.getCurrentContent()!.id!)])
+                console.log(navigator.getCurrentContent())
+                console.log(ev.detail)
+                console.log(documentTextNodes[parseInt(navigator.getCurrentContent()!.id!)])
             })
             wnd.addEventListener("beforeunload", () => navigator.stop())
         }
     }, [wnd]);
+
+    useEffect(() => {
+        if (wnd && clickedPosition) {
+            console.log("TODO: handle click:")
+            console.log(clickedPosition.x, clickedPosition.y)
+        }
+
+    }, [clickedPosition])
 
     useEffect(() => {
         if (wnd) {
@@ -55,8 +63,8 @@ export function StatefulControlledReadAloudExperiment() {
     }, [lastNavTS])
 
     return (
-        <pre onClick={() => navigator.stop()}>
-            {lastNavTS} - {wnd?.document?.title}
+        <pre onClick={() => navigator.getState() === 'playing' ? navigator.pause() : navigator.play()}>
+           {JSON.stringify(clickedPosition)} {lastNavTS} - {wnd?.document?.title}
         </pre>
     )
 }

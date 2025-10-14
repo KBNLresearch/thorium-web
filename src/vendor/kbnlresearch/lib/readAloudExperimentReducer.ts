@@ -6,12 +6,14 @@ export interface ReadAloudExperimentState {
     wnd: Window|null
     lastNavTS: number
     documentTextNodes: DocumentTextNodesChunk[]
+    clickedPosition: {x:number,y:number}|null
 }
 
 const initialState : ReadAloudExperimentState = {
     wnd: null,
     documentTextNodes: [],
-    lastNavTS: 0
+    lastNavTS: 0,
+    clickedPosition: null
 }
 
 
@@ -26,13 +28,17 @@ export const readAloudExperimentSlice = createSlice({
         },
         setLastNavTS: (state, action) => {
             state.lastNavTS = action.payload;
+        },
+        setClickedPosition: (state, action) => {
+            state.clickedPosition = action.payload;
         }
     }
 });
 
 export const {
     setWindow,
-    setLastNavTS
+    setLastNavTS,
+    setClickedPosition
 } = readAloudExperimentSlice.actions;
 
 export default readAloudExperimentSlice.reducer

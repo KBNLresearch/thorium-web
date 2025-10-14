@@ -109,7 +109,7 @@ import { getPlatformModifier } from "@/core/Helpers/keyboardUtilities";
 import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
 import { gatherAndPrepareTextNodes, isTextNodeVisible } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
-import { setLastNavTS, setWindow } from "@/vendor/kbnlresearch/lib/readAloudExperimentReducer";
+import { setClickedPosition, setLastNavTS, setWindow } from "@/vendor/kbnlresearch/lib/readAloudExperimentReducer";
 
 export interface ReadiumCSSSettings {
   columnCount: string;
@@ -519,6 +519,9 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
           handleTap(_e);
         }
       }
+      // KB hacking in
+      dispatch(setClickedPosition({x: _e.x, y: _e.y}))
+      // end KB hacking in
       return true;
     },
     zoom: function (_scale: number): void {},
