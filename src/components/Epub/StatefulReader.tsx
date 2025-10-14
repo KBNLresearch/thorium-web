@@ -109,6 +109,7 @@ import { getPlatformModifier } from "@/core/Helpers/keyboardUtilities";
 import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
 import { gatherAndPrepareTextNodes, isTextNodeVisible } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
+import { setLastNavTS, setWindow } from "@/vendor/kbnlresearch/lib/readAloudExperimentReducer";
 
 export interface ReadiumCSSSettings {
   columnCount: string;
@@ -463,7 +464,11 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
   const listeners: EpubNavigatorListeners = {
     frameLoaded: async function (_wnd: Window): Promise<void> {
       await initReadingEnv();
-      wnd.current = _wnd;
+      // KB Vendor hacking in
+      if (_wnd) {
+        dispatch(setWindow({ window: _wnd, textNodes: gatherAndPrepareTextNodes(_wnd)} ));
+      }
+      // end KB hack
 
       // Warning: this is using navigator’s internal methods that will become private, do not rely on them
       // See https://github.com/edrlab/thorium-web/issues/25
@@ -480,16 +485,9 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
         const debouncedHandleProgression = debounce(
           async () => {
             setLocalData(locator);
-            console.log("\n-- position changed --")
-            const documentTextNodes = gatherAndPrepareTextNodes(wnd.current!);
-            documentTextNodes.forEach((dtn, idx) => {
-              const mayLogIfVisible = `Text chunk ${idx + 1} - utterance:`;
-
-              dtn.rangedTextNodes.filter((rt) => isTextNodeVisible(wnd.current!, rt.textNode)).forEach((vrtn) => {
-                console.log(mayLogIfVisible);
-                console.log(vrtn.textNode, `--> PoS(${vrtn.parentStartCharIndex}) -->`, dtn.utteranceStr.substring(vrtn.parentStartCharIndex, vrtn.parentStartCharIndex + vrtn.textNode.textContent!.length))
-              })
-            })
+            // KB Vendor hacking in
+            dispatch(setLastNavTS(new Date().getTime()));
+            // end KB hack
           }, 250);
         debouncedHandleProgression();
       }

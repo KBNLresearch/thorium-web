@@ -7,6 +7,7 @@ import { ThMenu, THMenuProps } from "../Menu/ThMenu";
 
 import { useObjectRef } from "react-aria";
 import { CollapsiblePref, useCollapsibility } from "./hooks/useCollapsibility";
+import { StatefulControlledReadAloudExperiment } from "@/vendor/kbnlresearch/components/StatefulControlledReadAloudExperiment";
 
 export interface ThCollapsibleActionsBarProps extends ThActionsBarProps {
   id: string;
@@ -37,6 +38,9 @@ export const ThCollapsibleActionsBar = ({
       ref={ resolvedRef }
       { ...props }
     >
+      { /* KB Vendor hacking in for now  */}
+      <StatefulControlledReadAloudExperiment />
+      { /* end KB hack */}
       { Actions.ActionIcons.map(({ Trigger, Target, key, associatedKey }) => 
           <Fragment key={ key }>
             <Trigger 

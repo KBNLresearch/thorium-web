@@ -10,6 +10,7 @@ import publicationReducer, { PublicationReducerState } from "./publicationReduce
 import preferencesReducer, { PreferencesReducerState } from "./preferencesReducer";
 
 import debounce from "debounce";
+import readAloudExperimentReducer, { ReadAloudExperimentState } from "@/vendor/kbnlresearch/lib/readAloudExperimentReducer";
 
 interface ExternalReducerConfig {
   reducer: any;
@@ -23,6 +24,9 @@ export type RootState = {
   theming: ThemeReducerState;
   actions: ActionsReducerState;
   publication: PublicationReducerState;
+  // KB Vendor hacking in
+  readAloudExperiment: ReadAloudExperimentState;
+  // end KB hack
   preferences: PreferencesReducerState;
   [key: string]: any; // For external reducers
 };
@@ -129,6 +133,9 @@ export const makeStore = (storageKey?: string, externalReducers: Record<string, 
     actions: actionsReducer,
     publication: publicationReducer,
     preferences: preferencesReducer,
+    // KB Vendor hacking in
+    readAloudExperiment: readAloudExperimentReducer, 
+    // end KB Vendor hacking in
     ...Object.entries(externalReducers).reduce((acc, [key, config]) => ({
       ...acc,
       [key]: config.reducer
@@ -156,6 +163,9 @@ export const makeStore = (storageKey?: string, externalReducers: Record<string, 
   const store = configureStore({
     reducer: combinedReducers as unknown as Reducer<RootState>,
     preloadedState,
+    // KB Vendor hacking in
+    middleware: (getDefaultMiddleWare) => getDefaultMiddleWare({serializableCheck: false})
+    // end KB hack
   });
 
   const saveStateDebounced = debounce(() => {
