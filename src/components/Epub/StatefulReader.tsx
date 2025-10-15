@@ -108,7 +108,7 @@ import Peripherals from "../../helpers/peripherals";
 import { getPlatformModifier } from "@/core/Helpers/keyboardUtilities";
 import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
-import { gatherAndPrepareTextNodes, isTextNodeVisible } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
+import { gatherAndPrepareTextNodes } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
 import { setClickedPosition, setLastNavTS, setWindow } from "@/vendor/kbnlresearch/lib/readAloudExperimentReducer";
 
 export interface ReadiumCSSSettings {

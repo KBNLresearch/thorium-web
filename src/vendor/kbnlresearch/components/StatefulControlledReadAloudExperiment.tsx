@@ -1,27 +1,61 @@
 import { useAppSelector } from "@/lib"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { isTextNodeVisible } from "../helpers/visibleElementHelpers";
 import { WebSpeechReadAloudNavigator } from "../readium-speech";
+import "./highlighting.css";
 
 
-const navigator = new WebSpeechReadAloudNavigator()
-
-
+let navigator = new WebSpeechReadAloudNavigator()
 export function StatefulControlledReadAloudExperiment() {
     const { lastNavTS, wnd, documentTextNodes, clickedPosition } = useAppSelector(state => state.readAloudExperiment)
+    const [ utteranceIndex, setUtteranceIndex ] = useState<number>(0);
 
     useEffect(() => {
         if (wnd) {
             navigator.loadContent(documentTextNodes.map((dtn, idx) => ({
                 id: `${idx}`,
                 text: dtn.utteranceStr
-            })))
+            })));
             navigator.on("boundary", (ev) => {
-                console.log(navigator.getCurrentContent())
-                console.log(ev.detail)
-                console.log(documentTextNodes[parseInt(navigator.getCurrentContent()!.id!)])
+                const utIdx = parseInt(navigator.getCurrentContent()!.id!)
+                console.log(navigator.getCurrentContent()?.text);
+                const { charIndex, charLength } = ev.detail;
+                let firstTextNodeIndex = -1, lastTextNodeIndex = -1;
+                for (let idx = 0; idx < (documentTextNodes[utIdx].rangedTextNodes || []).length; idx++) {
+                    const rtn = documentTextNodes[utIdx].rangedTextNodes[idx];
+                    if (rtn.parentStartCharIndex <= charIndex) {
+                        firstTextNodeIndex = idx;
+                        lastTextNodeIndex = idx
+                    }
+                    if (firstTextNodeIndex > -1 && rtn.parentStartCharIndex + rtn.textNode.textContent!.length <= charIndex + charLength) {
+                        lastTextNodeIndex = idx
+                    }
+                }
+
+                if (firstTextNodeIndex > -1) {
+                    const sel = wnd.getSelection();
+                    sel?.removeAllRanges();
+                    for (let rtnIdx = firstTextNodeIndex; rtnIdx <= lastTextNodeIndex; rtnIdx++) {
+                        const rtn = documentTextNodes[utIdx].rangedTextNodes[rtnIdx];
+                        const chBegin = charIndex - rtn.parentStartCharIndex;
+                        const chEnd = charIndex - rtn.parentStartCharIndex + charLength;
+                        const rangeBegin = chBegin < 0 ? 0 : chBegin >  (rtn.textNode.textContent || "").length ?  (rtn.textNode.textContent || "").length : chBegin;
+                        const rangeEnd = chEnd > (rtn.textNode.textContent || "").length ? (rtn.textNode.textContent || "").length : chEnd 
+                        const range = new Range()
+                        range.setStart(rtn.textNode, rangeBegin);
+                        range.setEnd(rtn.textNode, rangeEnd);
+                        sel?.addRange(range);
+                    }
+                }
+                if (navigator.getState() === "playing") {
+                    setUtteranceIndex(utIdx)
+                }
             })
-            wnd.addEventListener("beforeunload", () => navigator.stop())
+            wnd.addEventListener("beforeunload", () => {
+                navigator.stop();
+                navigator.destroy();
+                navigator = new WebSpeechReadAloudNavigator();
+            })
         }
     }, [wnd]);
 
@@ -35,15 +69,6 @@ export function StatefulControlledReadAloudExperiment() {
 
     useEffect(() => {
         if (wnd) {
-            console.clear()
-            documentTextNodes.forEach((dtn, idx) => {
-                const mayLogIfVisible = `Text chunk ${idx + 1} - utterance:`;
-
-                dtn.rangedTextNodes.filter((rt) => isTextNodeVisible(wnd, rt.textNode)).forEach((vrtn) => {
-                    console.log(mayLogIfVisible);
-                    console.log(vrtn.textNode, `--> PoS(${vrtn.parentStartCharIndex}) -->`, dtn.utteranceStr.substring(vrtn.parentStartCharIndex, vrtn.parentStartCharIndex + vrtn.textNode.textContent!.length))
-                });
-            })
             const utteranceIndices = documentTextNodes.map((dtn, idx) => {
                 if (dtn.rangedTextNodes.find((rt) => isTextNodeVisible(wnd, rt.textNode))) {
                     return idx;
@@ -51,20 +76,22 @@ export function StatefulControlledReadAloudExperiment() {
                 return -1;
             }).filter((idx) => idx > -1);
             if (utteranceIndices.length === 1) {
-                navigator.jumpTo(utteranceIndices[0]);
-                navigator.play()
+                setUtteranceIndex(utteranceIndices[0])
             } else if (utteranceIndices.length > 1) {
-                navigator.jumpTo(utteranceIndices[1]);
-                navigator.play()
-            } else {
-                navigator.stop()
+                if (utteranceIndices[1] === 1) {
+                    setUtteranceIndex(0)
+                } else {
+                    setUtteranceIndex(utteranceIndices[1])
+                }
             }
         }
     }, [lastNavTS])
 
+
+
     return (
-        <pre onClick={() => navigator.getState() === 'playing' ? navigator.pause() : navigator.play()}>
-           {JSON.stringify(clickedPosition)} {lastNavTS} - {wnd?.document?.title}
+        <pre style={{cursor: "pointer"}} onClick={() => {if (navigator.getState() === "playing") { navigator.pause() } else {navigator.jumpTo(utteranceIndex); navigator.play()}}}>
+           {JSON.stringify(clickedPosition)} UTidx:{utteranceIndex} {lastNavTS} - {wnd?.document?.title}
         </pre>
     )
 }

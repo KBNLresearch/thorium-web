@@ -84,4 +84,5 @@ export function gatherAndPrepareTextNodes(wnd : Window): DocumentTextNodesChunk[
                 return aggr + cur.textContent
             }, "")
         }))
+        .filter((chnk) => chnk.utteranceStr.trim().length > 0)
 }

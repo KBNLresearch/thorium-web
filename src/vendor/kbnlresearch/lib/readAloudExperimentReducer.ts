@@ -27,7 +27,9 @@ export const readAloudExperimentSlice = createSlice({
             state.documentTextNodes = action.payload.textNodes;
         },
         setLastNavTS: (state, action) => {
-            state.lastNavTS = action.payload;
+            if (state.lastNavTS < action.payload) {
+                state.lastNavTS = action.payload;
+            }
         },
         setClickedPosition: (state, action) => {
             state.clickedPosition = action.payload;
