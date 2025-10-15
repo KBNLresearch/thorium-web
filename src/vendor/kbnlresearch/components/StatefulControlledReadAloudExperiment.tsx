@@ -2,7 +2,6 @@ import { useAppSelector } from "@/lib"
 import { useEffect, useState } from "react"
 import { isTextNodeVisible } from "../helpers/visibleElementHelpers";
 import { WebSpeechReadAloudNavigator } from "../readium-speech";
-import "./highlighting.css";
 
 
 let navigator = new WebSpeechReadAloudNavigator()
@@ -17,11 +16,12 @@ export function StatefulControlledReadAloudExperiment() {
                 text: dtn.utteranceStr
             })));
             navigator.on("boundary", (ev) => {
+                const { charIndex, charLength, name } = ev.detail;
+                if (name !== "word") { return; }
                 const utIdx = parseInt(navigator.getCurrentContent()!.id!)
-                console.log(navigator.getCurrentContent()?.text);
-                const { charIndex, charLength } = ev.detail;
+                console.log(ev.detail, navigator.getCurrentContent()?.text.substring(charIndex, charIndex + charLength));
                 let firstTextNodeIndex = -1, lastTextNodeIndex = -1;
-                for (let idx = 0; idx < (documentTextNodes[utIdx].rangedTextNodes || []).length; idx++) {
+                for (let idx = 0; idx < (documentTextNodes[utIdx]?.rangedTextNodes || []).length; idx++) {
                     const rtn = documentTextNodes[utIdx].rangedTextNodes[idx];
                     if (rtn.parentStartCharIndex <= charIndex) {
                         firstTextNodeIndex = idx;
