@@ -1,11 +1,24 @@
 import { useAppDispatch, useAppSelector } from "@/lib"
-import { CSSProperties, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { isTextNodeVisible } from "../helpers/visibleElementHelpers";
-import { ReadiumSpeechPlaybackState, WebSpeechReadAloudNavigator } from "../readium-speech";
+import { ReadiumSpeechPlaybackState, ReadiumSpeechVoice, WebSpeechReadAloudNavigator } from "../readium-speech";
 import { setWordRects } from "../lib/readAloudExperimentReducer";
 
 
 let navigator = new WebSpeechReadAloudNavigator()
+let voices : ReadiumSpeechVoice[] = []
+async function initVoices() {
+  try {
+    voices = (await navigator.getVoices()).filter(v => v.language.startsWith("nl"))
+    if (voices.length > 0) {
+         navigator.setVoice(voices[0])
+    }
+  } catch (error) {
+    console.error("Error initializing voices:", error);
+  }
+}
+initVoices()
+
 export function StatefulControlledReadAloudExperiment() {
     const dispatch = useAppDispatch();
     const { lastNavTS, wnd, documentTextNodes, clickedPosition } = useAppSelector(state => state.readAloudExperiment)
@@ -37,8 +50,8 @@ export function StatefulControlledReadAloudExperiment() {
                     }
                 }
                 if (firstTextNodeIndex > -1) {
-                    const sel = wnd.getSelection();
-                    sel?.removeAllRanges();
+                    // const sel = wnd.getSelection();
+                    // sel?.removeAllRanges();
                     let newWordRects : DOMRect[] = []
                     for (let rtnIdx = firstTextNodeIndex; rtnIdx <= lastTextNodeIndex; rtnIdx++) {
                         const rtn = documentTextNodes[utIdx].rangedTextNodes[rtnIdx];
@@ -49,7 +62,7 @@ export function StatefulControlledReadAloudExperiment() {
                         const range = new Range()
                         range.setStart(rtn.textNode, rangeBegin);
                         range.setEnd(rtn.textNode, rangeEnd);
-                        sel?.addRange(range);
+                        // sel?.addRange(range);
                         for (let i = 0; i < range.getClientRects().length; i++) {
                             newWordRects.push(range.getClientRects().item(i)!);
                         }
@@ -98,6 +111,11 @@ export function StatefulControlledReadAloudExperiment() {
 
     return (
         <>
+            <select onChange={(ev) => {navigator.pause(); navigator.setVoice(voices[parseInt(ev.target.value as string)]); navigator.jumpTo(utteranceIndex); navigator.play() }}>
+                {voices.map((voice, idx) => (
+                    <option value={idx}>{voice.name} ({voice.gender}) - {voice.language}</option>
+                ))}
+            </select>
             <button style={{cursor: "pointer"}} onClick={() => {if (navigator.getState() === "playing") { navigator.pause() } else {navigator.jumpTo(utteranceIndex); navigator.play()}}}>
                 {navigatorState === "playing" ? "Pauzeren" : "Starten"}{utteranceIndex}
             </button>
