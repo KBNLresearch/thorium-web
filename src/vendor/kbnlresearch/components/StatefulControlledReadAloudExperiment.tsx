@@ -1,13 +1,16 @@
-import { useAppSelector } from "@/lib"
-import { useEffect, useState } from "react"
+import { useAppDispatch, useAppSelector } from "@/lib"
+import { CSSProperties, useEffect, useState } from "react"
 import { isTextNodeVisible } from "../helpers/visibleElementHelpers";
-import { WebSpeechReadAloudNavigator } from "../readium-speech";
+import { ReadiumSpeechPlaybackState, WebSpeechReadAloudNavigator } from "../readium-speech";
+import { setWordRects } from "../lib/readAloudExperimentReducer";
 
 
 let navigator = new WebSpeechReadAloudNavigator()
 export function StatefulControlledReadAloudExperiment() {
+    const dispatch = useAppDispatch();
     const { lastNavTS, wnd, documentTextNodes, clickedPosition } = useAppSelector(state => state.readAloudExperiment)
     const [ utteranceIndex, setUtteranceIndex ] = useState<number>(0);
+    const [ navigatorState, setNavigatorState ] = useState<ReadiumSpeechPlaybackState>("loading")
 
     useEffect(() => {
         if (wnd) {
@@ -15,11 +18,13 @@ export function StatefulControlledReadAloudExperiment() {
                 id: `${idx}`,
                 text: dtn.utteranceStr
             })));
+            navigator.on("start", () => setNavigatorState("playing"));
+            navigator.on("pause", () => setNavigatorState("paused"));
+            navigator.on("end", () => setNavigatorState("paused"));
             navigator.on("boundary", (ev) => {
                 const { charIndex, charLength, name } = ev.detail;
                 if (name !== "word") { return; }
                 const utIdx = parseInt(navigator.getCurrentContent()!.id!)
-                console.log(ev.detail, navigator.getCurrentContent()?.text.substring(charIndex, charIndex + charLength));
                 let firstTextNodeIndex = -1, lastTextNodeIndex = -1;
                 for (let idx = 0; idx < (documentTextNodes[utIdx]?.rangedTextNodes || []).length; idx++) {
                     const rtn = documentTextNodes[utIdx].rangedTextNodes[idx];
@@ -31,21 +36,25 @@ export function StatefulControlledReadAloudExperiment() {
                         lastTextNodeIndex = idx
                     }
                 }
-
                 if (firstTextNodeIndex > -1) {
                     const sel = wnd.getSelection();
                     sel?.removeAllRanges();
+                    let newWordRects : DOMRect[] = []
                     for (let rtnIdx = firstTextNodeIndex; rtnIdx <= lastTextNodeIndex; rtnIdx++) {
                         const rtn = documentTextNodes[utIdx].rangedTextNodes[rtnIdx];
                         const chBegin = charIndex - rtn.parentStartCharIndex;
                         const chEnd = charIndex - rtn.parentStartCharIndex + charLength;
                         const rangeBegin = chBegin < 0 ? 0 : chBegin >  (rtn.textNode.textContent || "").length ?  (rtn.textNode.textContent || "").length : chBegin;
-                        const rangeEnd = chEnd > (rtn.textNode.textContent || "").length ? (rtn.textNode.textContent || "").length : chEnd 
+                        const rangeEnd = chEnd > (rtn.textNode.textContent || "").length ? (rtn.textNode.textContent || "").length : chEnd
                         const range = new Range()
                         range.setStart(rtn.textNode, rangeBegin);
                         range.setEnd(rtn.textNode, rangeEnd);
                         sel?.addRange(range);
+                        for (let i = 0; i < range.getClientRects().length; i++) {
+                            newWordRects.push(range.getClientRects().item(i)!);
+                        }
                     }
+                    dispatch(setWordRects(newWordRects))
                 }
                 if (navigator.getState() === "playing") {
                     setUtteranceIndex(utIdx)
@@ -87,11 +96,11 @@ export function StatefulControlledReadAloudExperiment() {
         }
     }, [lastNavTS])
 
-
-
     return (
-        <pre style={{cursor: "pointer"}} onClick={() => {if (navigator.getState() === "playing") { navigator.pause() } else {navigator.jumpTo(utteranceIndex); navigator.play()}}}>
-           {JSON.stringify(clickedPosition)} UTidx:{utteranceIndex} {lastNavTS} - {wnd?.document?.title}
-        </pre>
+        <>
+            <button style={{cursor: "pointer"}} onClick={() => {if (navigator.getState() === "playing") { navigator.pause() } else {navigator.jumpTo(utteranceIndex); navigator.play()}}}>
+                {navigatorState === "playing" ? "Pauzeren" : "Starten"}{utteranceIndex}
+            </button>
+        </>
     )
 }

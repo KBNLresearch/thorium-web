@@ -110,6 +110,7 @@ import { deserializePositions } from "@/helpers/deserializePositions";
 import { propsToCSSVars } from "@/core/Helpers/propsToCSSVars";
 import { gatherAndPrepareTextNodes } from "@/vendor/kbnlresearch/helpers/visibleElementHelpers";
 import { setClickedPosition, setLastNavTS, setWindow } from "@/vendor/kbnlresearch/lib/readAloudExperimentReducer";
+import { StatefulControlledReadAloudExperimentHighlights } from "@/vendor/kbnlresearch/components/StatefulControlledReadAloudExperimentHighlights";
 
 export interface ReadiumCSSSettings {
   columnCount: string;
@@ -863,6 +864,7 @@ const StatefulReaderInner = ({ rawManifest, selfHref }: { rawManifest: object; s
 
             <article id="wrapper" aria-label={ t("reader.app.publicationWrapper") }>
               <div id="container" ref={ container }></div>
+              <StatefulControlledReadAloudExperimentHighlights container={container.current} />
             </article>
 
           { !isScroll 
