@@ -44,21 +44,21 @@ const onlineBooks = [
     title: "Demo 1: Verhaal A1 A2, versie 1",
     author: "Marre",
     cover: "",
-    url: `/read/manifest/${encodeURIComponent("http://localhost:15080/ZGVtbzF2ZXJoYWFsQTFBMnZlcnNpZTEuZXB1Yg/manifest.json")}`,
+    url: `/read/manifest/${encodeURIComponent("https://www.kbresearch.nl/epub/ZGVtbzF2ZXJoYWFsQTFBMnZlcnNpZTEuZXB1Yg/manifest.json")}`,
     rendition: "Moet Meer Reflowable worden"
   },
   {
     title: "Demo 2: Verhaal A1 B2, versie 1",
     author: "Marre",
     cover: "",
-    url: `/read/manifest/${encodeURIComponent("http://localhost:15080/ZGVtbzJ2ZXJoYWFsQTJCMXZlcnNpZTEuZXB1Yg/manifest.json")}`,
+    url: `/read/manifest/${encodeURIComponent("https://www.kbresearch.nl/epub/ZGVtbzJ2ZXJoYWFsQTJCMXZlcnNpZTEuZXB1Yg/manifest.json")}`,
     rendition: "Moet Meer Reflowable worden"
   },
   {
     title: "Demo 3: Lesboek, versie 1",
     author: "Marre",
     cover: "",
-    url: `/read/manifest/${encodeURIComponent("http://localhost:15080/ZGVtbzNsZXNib2VrMS5lcHVi/manifest.json")}`,
+    url: `/read/manifest/${encodeURIComponent("https://www.kbresearch.nl/epub/ZGVtbzNsZXNib2VrMS5lcHVi/manifest.json")}`,
     rendition: "Moet Meer Reflowable worden"
   }
   // {

@@ -34,21 +34,21 @@ const nextConfig = {
 
     return config
   },
-  async redirects() {
-    const isProduction = process.env.NODE_ENV === "production";
-    const isManifestEnabled = !isProduction || process.env.MANIFEST_ROUTE_FORCE_ENABLE === "true";
+  // async redirects() {
+  //   const isProduction = process.env.NODE_ENV === "production";
+  //   const isManifestEnabled = !isProduction || process.env.MANIFEST_ROUTE_FORCE_ENABLE === "true";
 
-    if (isProduction && !isManifestEnabled) {
-      return [
-        {
-          source: "/read/manifest/:path*",
-          destination: "/",
-          permanent: false,
-        },
-      ];
-    }
-    return [];
-  }
+  //   if (isProduction && !isManifestEnabled) {
+  //     return [
+  //       {
+  //         source: "/read/manifest/:path*",
+  //         destination: "/",
+  //         permanent: false,
+  //       },
+  //     ];
+  //   }
+  //   return [];
+  // }
 };
 
 export default nextConfig;

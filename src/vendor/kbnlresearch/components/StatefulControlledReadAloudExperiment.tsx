@@ -113,7 +113,7 @@ export function StatefulControlledReadAloudExperiment() {
         <>
             <select onChange={(ev) => {navigator.pause(); navigator.setVoice(voices[parseInt(ev.target.value as string)]); navigator.jumpTo(utteranceIndex); navigator.play() }}>
                 {voices.map((voice, idx) => (
-                    <option value={idx}>{voice.name} ({voice.gender}) - {voice.language}</option>
+                    <option key={idx} value={idx}>{voice.name} - {voice.language}</option>
                 ))}
             </select>
             <button style={{cursor: "pointer"}} onClick={() => {if (navigator.getState() === "playing") { navigator.pause() } else {navigator.jumpTo(utteranceIndex); navigator.play()}}}>
