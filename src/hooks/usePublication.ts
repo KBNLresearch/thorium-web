@@ -25,7 +25,7 @@ export const usePublication = ({
     }
 
     // Decode URL if needed
-    const decodedUrl = decodeURIComponent(url);
+    const decodedUrl = `https://www.kbresearch.nl/epub/${decodeURIComponent(url)}/manifest.json`;
     
     const manifestLink = new Link({ href: decodedUrl });
     const fetcher = new HttpFetcher(undefined);
