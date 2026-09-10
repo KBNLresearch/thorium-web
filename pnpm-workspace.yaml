@@ -12,3 +12,9 @@ trustPolicy: no-downgrade
 # a publish-pipeline gap, not a trust downgrade.
 trustPolicyExclude:
   - "undici"
+  - "chokidar"
+  - "eslint-import-resolver-typescript"
+  - "react-redux"
+  - "semver"
+  - "undici-types"
+  - "reselect"

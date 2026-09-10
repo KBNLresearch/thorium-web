@@ -14,6 +14,18 @@ const nextConfig = {
         protocol: "https",
         hostname: "www.archive.org",
       },
+      {
+        protocol: "https",
+        hostname: "www.kbresearch.nl",
+      },
+      {
+        protocol: "https",
+        hostname: "thorium.kbresearch.nl",
+      },
+      {
+        protocol: "https",
+        hostname: "kbresearch.nl",
+      }
     ],
   },
   
